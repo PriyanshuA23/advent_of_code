@@ -1,16 +1,23 @@
 const isPasswordUnderCriteria = (password) => {
   const splitedPassword = password.toString().split('').map((num) => parseInt(num));
 
-  let isAdjacentDigits = false;
+  const totalAdjacentDigits = [];
+  let adjacentDigit = 1;
   let previousDigit = -Infinity;
 
   for (const digit of splitedPassword) {
     if (digit < previousDigit && previousDigit > digit) return false;
-    if (digit === previousDigit) isAdjacentDigits = true;
+    if (digit !== previousDigit) {
+      totalAdjacentDigits.push(adjacentDigit); 
+      adjacentDigit = 1;
+    }
+
+    if (digit === previousDigit) adjacentDigit++;
     previousDigit = digit;
   }
-
-  return isAdjacentDigits;
+  totalAdjacentDigits.push(adjacentDigit);
+  
+  return totalAdjacentDigits.join('').toString().includes('2') ;
 }
 
 const calculateTotalPossiblePasswords = () => {
