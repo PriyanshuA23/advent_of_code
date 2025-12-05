@@ -1,16 +1,3 @@
-const operations = {
-  1: "add",
-  2: "multiply",
-  3: "input",
-  4: "output",
-  99: "hault",
-};
-
-const dbg = (description, x) => {
-  return x;
-  console.log(description, x);
-};
-
 const extractValueInPositionMode = (parameter, intCode) => { // this will treat parameter as position
   return intCode[parameter];
 };
@@ -19,80 +6,74 @@ const extractValueOfParameter = (value, mode, intCode) => { // return parameter 
   return mode === 0 ? extractValueInPositionMode(value, intCode) : value;
 };
 
-const performArithmeticOperation = (intCode, parameters, operation, modes) => {
-  const operand1 = extractValueOfParameter(parameters[0], modes[0], intCode);
-  const operand2 = extractValueOfParameter(parameters[1], modes[1], intCode);
+const add = (intCode, operands, modes) => {
+  const operand1 = extractValueOfParameter(operands[0], modes[0], intCode);
+  const operand2 = extractValueOfParameter(operands[1], modes[1], intCode);
 
-  if (operation === "add") intCode[parameters[2]] = operand1 + operand2;
+  intCode[operands[2]] = operand1 + operand2;
 
-  if (operation === "multiply") intCode[parameters[2]] = operand1 * operand2;
+  return 4;
 };
 
-const performIOOperation = (intCode, parameter, operation, modes) => {
-  if (operation === "input") {
-    const input = +prompt();
-    intCode[parameter[0]] = input;
-  }
+const multiply = (intCode, operands, modes) => {
+  const operand1 = extractValueOfParameter(operands[0], modes[0], intCode);
+  const operand2 = extractValueOfParameter(operands[1], modes[1], intCode);
 
-  if (operation === "output") {
-    const value = extractValueOfParameter(parameter[0], modes[0], intCode);
-    // const value = intCode[parameter[0]];
-    console.log(value);
-  }
+  intCode[operands[2]] = operand1 * operand2;
+
+  return 4;
+};
+
+const input = (intCode, operands) => {
+  const input = +prompt();
+  intCode[operands[0]] = input;
+
+  return 2;
+};
+
+const output = (intCode, operands, modes) => {
+  const value = extractValueOfParameter(operands[0], modes[0], intCode);
+  console.log(value);
+
+  return 2;
+};
+
+const operations = {
+  1: add,
+  2: multiply,
+  3: input,
+  4: output,
+  99: "hault",
 };
 
 const parseInstruction = (instruction) => {
   const modifiedInstruction = instruction.toString();
   const lengthOfInstruction = modifiedInstruction.length;
+  const mode = modifiedInstruction.split("").reverse();
 
-  if (modifiedInstruction.length <= 2) return { instruction, mode: [0, 0] };
+  mode.shift();
+  mode.shift();
 
-  if (modifiedInstruction.length >= 3) {
-    const mode = modifiedInstruction.split("").reverse();
-    mode.shift();
-    mode.shift();
-    return {
-      instruction: parseInt(modifiedInstruction.slice(lengthOfInstruction - 2)),
-      mode: mode.map((num) => parseInt(num)),
-    };
-  }
+  return {
+    instruction: parseInt(modifiedInstruction.slice(lengthOfInstruction - 2)),
+    mode: mode.map((num) => parseInt(num)),
+  };
 };
 
 const evaluateIntCode = (input) => { //10099
   const intCode = input.split(",").map((ele) => parseInt(ele));
 
-  for (let index = 0; index < intCode.length;) {
-    const element = intCode[index].toString().padStart(5,0);
-    dbg("index: ", index);
-    dbg("element: ", intCode[index]);
-
+  for (let i = 0; i < intCode.length;) {
+    const element = intCode[i].toString().padStart(5, 0);
     const { instruction, mode } = parseInstruction(element);
-  
-    dbg("instruction: ", instruction);
-    dbg("mode: ", mode);
-
     const operation = operations[instruction];
-    const parameter = [
-      intCode[index + 1],
-      intCode[index + 2],
-      intCode[index + 3],
-    ];
-    dbg("operation: ", operation);
-    dbg("parameter: ", parameter);
+    const operands = [intCode[i + 1], intCode[i + 2], intCode[i + 3]];
 
-    if (operation === "add" || operation === "multiply") {
-      performArithmeticOperation(intCode, parameter, operation, mode);
-
-      index += 4;
-    }
     if (operation === "hault") {
       break;
     }
 
-    if (operation === "input" || operation === "output") {
-      performIOOperation(intCode, parameter, operation, mode);
-      index += 2;
-    }
+    i += operation(intCode, operands, mode);
   }
 };
 
